@@ -17,8 +17,16 @@ Our ReNoise inversion technique can be applied to various diffusion models, incl
 This demo preform real image editing using our ReNoise inversion. The input image is resize to size of 512x512, the optimal size of SDXL Turbo.
 '''
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model_type = Model_Type.SDXL_Turbo
+# Determine device (XPU > CUDA > CPU)
+if hasattr(torch, 'xpu') and torch.xpu.is_available():
+    device = "xpu"
+elif torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
+print(f"[Gradio App] Using device: {device}")
+
+model_type = Model_Type.SDXL_Turbo # Default model type
 scheduler_type = Scheduler_Type.EULER
 image_size = model_type_to_size(Model_Type.SDXL_Turbo)
 pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_type, device=device)

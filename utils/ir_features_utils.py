@@ -34,7 +34,8 @@ class AddMarginProduct(torch.nn.Module):
 
         phi = cosine - self.m
         # --------------------------- convert label to one-hot ---------------------------
-        one_hot = torch.zeros(cosine.size(), device="cuda")
+        # Create one_hot tensor on the same device as the input
+        one_hot = torch.zeros_like(cosine, device=input.device)
 
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
 

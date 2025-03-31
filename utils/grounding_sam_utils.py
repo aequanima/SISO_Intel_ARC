@@ -121,15 +121,35 @@ def refine_masks(
     return masks
 
 
-def get_grounding_sam():
+def get_grounding_sam(device: str = None):
+    """Initializes and returns components for Grounding SAM."""
+    
+    # Determine target device if not provided
+    if device is None:
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            target_device = "xpu"
+        elif torch.cuda.is_available():
+            target_device = "cuda"
+        else:
+            target_device = "cpu"
+        print(f"[get_grounding_sam] Auto-detected device: {target_device}")
+    else:
+        target_device = device
+        print(f"[get_grounding_sam] Using provided device: {target_device}")
+
     threshold = 0.3
     detector_id = "IDEA-Research/grounding-dino-tiny"
     segmenter_id = "facebook/sam-vit-base"
+    
+    print(f"[get_grounding_sam] Loading object detector ({detector_id}) to {target_device}...")
     object_detector = pipeline(
-        model=detector_id, task="zero-shot-object-detection", device="cuda"
+        model=detector_id, task="zero-shot-object-detection", device=target_device
     )
-    segmentator = AutoModelForMaskGeneration.from_pretrained(segmenter_id).to("cuda")
+    print(f"[get_grounding_sam] Loading segmentator ({segmenter_id}) to {target_device}...")
+    segmentator = AutoModelForMaskGeneration.from_pretrained(segmenter_id).to(target_device)
+    print(f"[get_grounding_sam] Loading segment processor ({segmenter_id})...")
     segment_processor = AutoProcessor.from_pretrained(segmenter_id)
+    print("[get_grounding_sam] Initialization complete.")
     return threshold, object_detector, segmentator, segment_processor
 
 

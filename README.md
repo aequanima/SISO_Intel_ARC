@@ -14,37 +14,46 @@
 
 ## Description
 
-Official implementation of *Single Image Iterative Subject-driven Generation and Editing*. 
+Official implementation of *Single Image Iterative Subject-driven Generation and Editing*.
+
+**Note:** This is a fork modified to improve compatibility with different hardware accelerators, including Intel XPU via IPEX, by removing hardcoded CUDA references and refactoring some dependencies.
 
 ## Setup
-Clone the repository and navigate into the directory:
-```
-git clone https://github.com/yairshp/SISO.git
-cd SISO
-```
 
-Create a conda environment using the following command:
-```
-conda env create -f environment.yml
-```
+1.  **Clone Repository:**
+    ```bash
+    # Replace <your-fork-url> with the actual URL of this repository
+    git clone <your-fork-url> SISO-Fork
+    cd SISO-Fork
+    ```
 
-Install the dependencies for the IR feature extractor:
+2.  **Prepare Python Environment:**
+    *   Ensure you have a Python environment (3.10+ recommended) ready. This could be a virtual environment (venv) or a conda environment.
+    *   **Activate** the environment you intend to use for SISO (and potentially ComfyUI if sharing the environment).
 
-```
-cd IR_dependencies/open_clip_280
-pip install -e .
-cd ../open_clip_280_overlap
-pip install -e .
-```
+3.  **Install Dependencies:**
+    *   Install the core Python packages:
+        ```bash
+        pip install -r requirements.txt
+        ```
+    *   Install the required `open_clip` dependencies via editable install:
+        ```bash
+        pip install -e third_party/IR_dependencies/open_clip_280
+        pip install -e third_party/IR_dependencies/open_clip_280_overlap
+        ```
+    *   *(Optional but Recommended)* Verify installation, paying attention to any version warnings, especially for `torch`, `diffusers`, etc.
 
-Now activate your environment:
-```
-conda activate siso
-```
+4.  **Download IR Weights:**
+    *   Download the `ir_features.pth` file from the source specified in the original SISO project (e.g., [Kaggle Link](https://www.kaggle.com/datasets/louieshao/guieweights0732?resource=download)).
+    *   Create a directory `models/ir_weights/` within the cloned `SISO-Fork` repository.
+    *   Place the downloaded `ir_features.pth` file inside `SISO-Fork/models/ir_weights/`.
 
-Finally, download IR model weights from [here](https://www.kaggle.com/datasets/louieshao/guieweights0732?resource=download).
+5.  **Device Setup (CUDA/XPU/CPU):**
+    *   The scripts in this fork attempt to auto-detect the available accelerator (XPU > CUDA > CPU).
+    *   Ensure your environment is correctly configured (CUDA toolkit installed, or Intel® Extension for PyTorch* (IPEX) installed for XPU).
+    *   You may need to configure `accelerate` via `accelerate config` for multi-GPU or specific setups.
 
-## Run SISO for Generation
+## Run SISO (Command Line)
 
 ### FLUX
 ```
@@ -82,6 +91,35 @@ python inference_prompt_simplification.py --model_name Efficient-Large-Model/San
 ```
  python siso_editing_sdxl.py --output_dir logs/dog_editing --seed=42 --lr_warmup_steps 0 --lr_scheduler constant --learning_rate 3e-4 --train_batch_size 1 --resolution 512 --pretrained_model_name_or_path stabilityai/sdxl-turbo --num_train_epochs 50 --bg_mse_loss_weight 10. --ir_features_weight 1.0 --dino_features_weight 1.0 --early_stopping_threshold_percentage 3 --early_stopping_max_count 7 --input_image_path example_images/dog_input.png --subject_image_path example_images/dog_subject.png --ir_features_path <path_to_IR_weights>
 ```
+
+## ComfyUI Integration (Experimental)
+
+This fork includes an experimental custom node allowing you to run the SISO LoRA generation process from the ComfyUI interface.
+
+**Location:** The node code is located within the `comfyui_node/` directory of this repository.
+
+**Functionality:** Provides a "SISO LoRA Generator (Blocking)" node that takes parameters (subject image, prompt, paths, etc.) and executes the appropriate SISO generation script (e.g., `siso_generation_sdxl.py`) located in the main repository directory. It uses the default paths set up during installation (e.g., for IR weights).
+
+**Installation:**
+1.  Complete the main **Setup** steps 1-5 above (clone repo, install dependencies, download weights). Ensure the Python environment used for installation is the same one ComfyUI uses.
+2.  Create a symbolic link (symlink) from your ComfyUI `custom_nodes` directory to the `comfyui_node` directory within your cloned `SISO-Fork` repository. This allows ComfyUI to find the node while keeping the code within the main project structure.
+    *   **Linux/macOS:**
+        ```bash
+        # Make sure paths are correct for your system
+        ln -s /path/to/your/SISO-Fork/comfyui_node /path/to/your/ComfyUI/custom_nodes/SISO_Node
+        ```
+    *   **Windows (Run Command Prompt as Administrator):**
+        ```cmd
+        mklink /D C:\path\to\your\ComfyUI\custom_nodes\SISO_Node C:\path\to\your\SISO-Fork\comfyui_node
+        ```
+3.  Restart ComfyUI.
+
+**Usage:**
+*   Add the "SISO LoRA Generator (Blocking)" node to your workflow.
+*   Configure the inputs. The default paths for the script and IR weights should work if you followed the setup. You mainly need to provide the subject image, prompt, output directory, and base model path.
+*   Trigger the `execute` input. **ComfyUI will freeze** during execution.
+*   Check the `status` output. If successful, use the `lora_path` output with a `Load LoRA` node.
+*   Refer to the node's docstring (`comfyui_node/SISO_LoRA_Generator.py`) and the Troubleshooting section below for more details.
 
 
 ## Citation

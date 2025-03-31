@@ -522,7 +522,7 @@ def main(args):
     input_image = general_utils.resize_and_center_crop(
         input_image, (args.resolution, args.resolution)
     )
-    input_image_arr = general_utils.image_to_tensor(input_image).cuda()
+    input_image_arr = general_utils.image_to_tensor(input_image).to(accelerator.device)
 
     subject_image = general_utils.load_image(args.subject_image_path)
     subject_image_arr = general_utils.image_to_tensor(subject_image)
@@ -558,7 +558,7 @@ def main(args):
         segmentator_model=segmentator_model,
         segment_processor=segment_processor,
     )
-    input_image_mask_arr = general_utils.image_to_tensor(input_image_mask).cuda()
+    input_image_mask_arr = general_utils.image_to_tensor(input_image_mask).to(accelerator.device)
 
     del (
         labeler_model,
@@ -912,7 +912,7 @@ def main(args):
 
     dino_subject_image_input = dino_utils.prepare_for_dino(
         subject_image_arr, transforms_configs
-    ).cuda()
+    ).to(accelerator.device)
     with torch.no_grad():
         dino_subject_image_features = dino_utils.get_dino_features(
             dino, dino_subject_image_input

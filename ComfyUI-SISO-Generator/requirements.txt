@@ -1,0 +1,30 @@
+# Core ML/DL Libraries (Versions from environment.yml)
+torch==2.2.0
+torchvision==0.17.0
+
+# Diffusers and related Hugging Face libs (Versions from environment.yml)
+# Note: Check if newer versions are compatible/required by ComfyUI or SISO script if issues arise.
+diffusers==0.32.1
+transformers==4.48.3
+accelerate==1.2.1
+peft==0.13.2
+safetensors==0.4.5
+huggingface-hub==0.25.0
+
+# SISO Specific Feature Extractors (Versions from environment.yml)
+timm==1.0.12
+kornia==0.7.4
+open_clip_torch # Verify package name and version if installation fails. May require specific install command from source repo.
+
+# Utilities (Versions from environment.yml where available)
+numpy==1.24.1
+Pillow==10.2.0
+tqdm==4.67.1
+PyYAML==6.0.2
+requests # Standard requirement, version flexible
+packaging # Standard requirement, version flexible
+filelock==3.16.1
+regex # Standard requirement, version flexible
+
+# Datasets (Needed by the siso_generation_sdxl.py script)
+datasets==3.2.0

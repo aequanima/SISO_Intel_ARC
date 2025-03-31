@@ -1,6 +1,6 @@
 import torch
-from third_party.diffusers29 import StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline
-# from diffusers import StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline
+# from third_party.diffusers29 import StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline # Refactored
+from diffusers import StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline # Use installed diffusers
 
 from third_party.renoise_inversion.src.eunms import Model_Type, Scheduler_Type
 from third_party.renoise_inversion.src.schedulers.euler_scheduler import (
@@ -153,10 +153,25 @@ def _get_pipes(model_type, device):
     return pipe_inversion, pipe_inference
 
 
-def get_pipes(model_type, scheduler_type, device="cuda"):
+def get_pipes(model_type, scheduler_type, device: str = None): # Changed default from "cuda"
+    """Gets inversion and inference pipelines, auto-detecting device if needed."""
+    
+    # Determine target device if not provided
+    if device is None:
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            target_device = "xpu"
+        elif torch.cuda.is_available():
+            target_device = "cuda"
+        else:
+            target_device = "cpu"
+        print(f"[get_pipes] Auto-detected device: {target_device}")
+    else:
+        target_device = device
+        print(f"[get_pipes] Using provided device: {target_device}")
+
     scheduler_class = scheduler_type_to_class(scheduler_type)
 
-    pipe_inversion, pipe_inference = _get_pipes(model_type, device)
+    pipe_inversion, pipe_inference = _get_pipes(model_type, target_device) # Pass determined device
 
     pipe_inference.scheduler = scheduler_class.from_config(
         pipe_inference.scheduler.config

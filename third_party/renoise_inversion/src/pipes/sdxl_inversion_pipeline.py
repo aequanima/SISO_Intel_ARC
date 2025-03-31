@@ -2,15 +2,21 @@ import torch
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 # from diffusers import StableDiffusionXLImg2ImgPipeline
 # from diffusers.utils.torch_utils import randn_tensor
-from third_party.diffusers29 import StableDiffusionXLImg2ImgPipeline
-from third_party.diffusers29.utils.torch_utils import randn_tensor
+# from third_party.diffusers29 import StableDiffusionXLImg2ImgPipeline # Refactored
+# from third_party.diffusers29.utils.torch_utils import randn_tensor # Refactored
+# from third_party.diffusers29.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import ( # Refactored
+#     StableDiffusionXLPipelineOutput, # Refactored
+#     retrieve_timesteps, # Refactored
+#     PipelineImageInput, # Refactored
+# ) # Refactored
 
-# from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import (
-from third_party.diffusers29.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import (
-    StableDiffusionXLPipelineOutput,
-    retrieve_timesteps,
-    PipelineImageInput,
-)
+from diffusers import StableDiffusionXLImg2ImgPipeline # Use installed diffusers
+from diffusers.utils import randn_tensor # Use installed diffusers
+from diffusers.image_processor import PipelineImageInput # Use installed diffusers
+from diffusers.pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput # Use installed diffusers
+# Note: retrieve_timesteps is often defined within the pipeline class or imported differently in newer diffusers.
+# We might need to adjust how it's called later if this causes issues. For now, assume it's available via the pipeline instance.
+# from diffusers.pipelines.pipeline_utils import retrieve_timesteps # Potential location
 
 from third_party.renoise_inversion.src.renoise_inversion import inversion_step
 

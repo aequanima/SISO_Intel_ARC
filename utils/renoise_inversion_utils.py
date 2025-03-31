@@ -19,19 +19,37 @@ from local_pipelines.pipeline_stable_diffusion_xl_img2img_with_grads import (
 )
 
 
-def create_noise_list(model_type, length, generator):
+def create_noise_list(model_type, length, generator, device: str = None):
+    """Creates a list of noise tensors on the specified or auto-detected device."""
+
+    # Determine target device if not provided
+    if device is None:
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            target_device = "xpu"
+        elif torch.cuda.is_available():
+            target_device = "cuda" # Note: Doesn't specify index like "cuda:0"
+        else:
+            target_device = "cpu"
+        print(f"[create_noise_list] Auto-detected device: {target_device}")
+    else:
+        target_device = device
+        print(f"[create_noise_list] Using provided device: {target_device}")
+
     img_size = model_type_to_size(model_type)
     VQAE_SCALE = 8
     latents_size = (1, 4, img_size[0] // VQAE_SCALE, img_size[1] // VQAE_SCALE)
-    return [
-        randn_tensor(
+    
+    noise_list = []
+    for _ in range(length):
+        noise = randn_tensor(
             latents_size,
             dtype=torch.float32,
-            device=torch.device("cuda:0"),
+            device=torch.device(target_device), # Use determined device
             generator=generator,
         )
-        for i in range(length)
-    ]
+        noise_list.append(noise)
+        
+    return noise_list
 
 
 def get_renoise_inversion_pipes(
@@ -40,8 +58,25 @@ def get_renoise_inversion_pipes(
     text_encoder_two,
     unet,
     model_name="stabilityai/sdxl-turbo",
-    device="cuda",
+    device: str = None, # Changed default from "cuda"
 ):
+    """Initializes and returns ReNoise inversion and inference pipelines."""
+
+    # Determine target device if not provided
+    if device is None:
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            target_device = "xpu"
+        elif torch.cuda.is_available():
+            target_device = "cuda"
+        else:
+            target_device = "cpu"
+        print(f"[get_renoise_inversion_pipes] Auto-detected device: {target_device}")
+    else:
+        target_device = device
+        print(f"[get_renoise_inversion_pipes] Using provided device: {target_device}")
+
+    print(f"[get_renoise_inversion_pipes] Loading inference pipeline ({model_name}) to {target_device}...")
+    # Load inference pipeline and move to target device
     pipe_inference = StableDiffusionXLImg2ImgPipelineWithGrads.from_pretrained(
         model_name,
         vae=vae,
@@ -50,15 +85,35 @@ def get_renoise_inversion_pipes(
         unet=unet,
         use_safetensors=True,
         safety_checker=None,
-    ).to(device)
-    pipe_inversion = SDXLDDIMPipeline(**pipe_inference.components)
+    ).to(target_device)
 
-    pipe_inference.scheduler = MyEulerAncestralDiscreteScheduler.from_config(
-        pipe_inference.scheduler.config
-    )
-    pipe_inversion.scheduler = MyEulerAncestralDiscreteScheduler.from_config(
-        pipe_inversion.scheduler.config
-    )
+    print(f"[get_renoise_inversion_pipes] Creating inversion pipeline components...")
+    # Create inversion pipeline using components from inference pipeline (already on target_device)
+    # Note: SDXLDDIMPipeline might need specific imports or adjustments
+    # Assuming SDXLDDIMPipeline exists and accepts components dictionary
+    try:
+        # This assumes SDXLDDIMPipeline is defined elsewhere and works like this
+        pipe_inversion = SDXLDDIMPipeline(**pipe_inference.components)
+        # Explicitly move the inversion pipeline object too, although components might be sufficient
+        pipe_inversion.to(target_device)
+    except NameError:
+        print("[get_renoise_inversion_pipes] WARNING: SDXLDDIMPipeline not found. Inversion pipeline creation skipped/failed.")
+        pipe_inversion = None # Handle case where it's not defined
+
+    print(f"[get_renoise_inversion_pipes] Setting schedulers...")
+    # Set schedulers (assuming MyEulerAncestralDiscreteScheduler is defined elsewhere)
+    try:
+        pipe_inference.scheduler = MyEulerAncestralDiscreteScheduler.from_config(
+            pipe_inference.scheduler.config
+        )
+        if pipe_inversion is not None:
+            pipe_inversion.scheduler = MyEulerAncestralDiscreteScheduler.from_config(
+                pipe_inversion.scheduler.config # Use its own config if it exists
+            )
+    except NameError:
+         print("[get_renoise_inversion_pipes] WARNING: MyEulerAncestralDiscreteScheduler not found. Schedulers not set.")
+
+    print("[get_renoise_inversion_pipes] Initialization complete.")
     return pipe_inversion, pipe_inference
 
 

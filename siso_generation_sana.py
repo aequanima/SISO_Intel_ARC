@@ -910,7 +910,7 @@ def main(args):
 
     dino_subject_image_input = dino_utils.prepare_for_dino(
         subject_image_arr, transforms_configs
-    ).cuda()
+    ).to(accelerator.device)
     with torch.no_grad():
         dino_subject_image_features = dino_utils.get_dino_features(
             dino, dino_subject_image_input

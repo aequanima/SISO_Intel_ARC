@@ -1,7 +1,11 @@
 # from diffusers import EulerAncestralDiscreteScheduler
 # from diffusers.utils import BaseOutput
-from third_party.diffusers29 import EulerAncestralDiscreteScheduler
-from third_party.diffusers29.utils import BaseOutput
+# from third_party.diffusers29 import EulerAncestralDiscreteScheduler # Refactored
+# from third_party.diffusers29.utils import BaseOutput # Refactored
+
+from diffusers import EulerAncestralDiscreteScheduler # Use installed diffusers
+from diffusers.utils import BaseOutput # Use installed diffusers
+
 import torch
 from typing import List, Optional, Tuple, Union
 import numpy as np

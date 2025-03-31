@@ -1265,7 +1265,14 @@ def download_from_original_stable_diffusion_ckpt(
             checkpoint = safe_load(checkpoint_path_or_dict, device="cpu")
         else:
             if device is None:
-                device = "cuda" if torch.cuda.is_available() else "cpu"
+                # Determine device (XPU > CUDA > CPU)
+                if hasattr(torch, 'xpu') and torch.xpu.is_available():
+                    device = "xpu"
+                elif torch.cuda.is_available():
+                    device = "cuda"
+                else:
+                    device = "cpu"
+                print(f"[convert_from_ckpt] Auto-detected device: {device}")
                 checkpoint = torch.load(checkpoint_path_or_dict, map_location=device)
             else:
                 checkpoint = torch.load(checkpoint_path_or_dict, map_location=device)
@@ -1833,7 +1840,14 @@ def download_controlnet_from_original_ckpt(
                 checkpoint[key] = f.get_tensor(key)
     else:
         if device is None:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
+            # Determine device (XPU > CUDA > CPU)
+            if hasattr(torch, 'xpu') and torch.xpu.is_available():
+                device = "xpu"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
+            print(f"[convert_controlnet_checkpoint_to_ldm] Auto-detected device: {device}")
             checkpoint = torch.load(checkpoint_path, map_location=device)
         else:
             checkpoint = torch.load(checkpoint_path, map_location=device)

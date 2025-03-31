@@ -9,7 +9,14 @@ from main import run as invert
 
 
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# Determine device (XPU > CUDA > CPU)
+if hasattr(torch, 'xpu') and torch.xpu.is_available():
+    device = "xpu"
+elif torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
+print(f"Using device: {device}")
 
 model_type = Model_Type.SD15
 scheduler_type = Scheduler_Type.DDIM

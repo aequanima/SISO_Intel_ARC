@@ -1,9 +1,14 @@
 # from diffusers import DDIMScheduler
 # from diffusers.utils import BaseOutput
 # from diffusers.utils.torch_utils import randn_tensor
-from third_party.diffusers29 import DDIMScheduler
-from third_party.diffusers29.utils import BaseOutput
-from third_party.diffusers29.utils.torch_utils import randn_tensor
+# from third_party.diffusers29 import DDIMScheduler # Refactored
+# from third_party.diffusers29.utils import BaseOutput # Refactored
+# from third_party.diffusers29.utils.torch_utils import randn_tensor # Refactored
+
+from diffusers import DDIMScheduler # Use installed diffusers
+from diffusers.utils import BaseOutput # Use installed diffusers
+from diffusers.utils import randn_tensor # Use installed diffusers
+
 import torch
 from typing import List, Optional, Tuple, Union
 import numpy as np
